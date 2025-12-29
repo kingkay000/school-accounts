@@ -1,0 +1,79 @@
+{
+  "name": "School Receipts Watcher",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "fileCreated",
+        "watchPath": "/School Receipts 2025"
+      },
+      "name": "Google Drive Trigger",
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "prompt": "Analyze this image. Extract the Total Amount, Date, and Vendor Name.\nMatch it to a School GL Head:\nIf it's for 'Fuel/Diesel' -> GL 5300\nIf it's for 'Stationery' -> GL 5200\nIf it's for 'Food/Groceries' -> GL 4400 (Ancillary)\nReturn the result in JSON with keys: amount, date, vendor_name, gl_code.",
+        "text": "={{ $json.name }}"
+      },
+      "name": "AI Agent (Gemini)",
+      "type": "n8n-nodes-base.googleGemini",
+      "typeVersion": 1,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:8000/api/v1/receipt-webhook",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+             { "name": "file_id", "value": "={{ $node['Google Drive Trigger'].json['id'] }}" },
+             { "name": "file_name", "value": "={{ $node['Google Drive Trigger'].json['name'] }}" },
+             { "name": "amount", "value": "={{ $json['amount'] }}" },
+             { "name": "date", "value": "={{ $json['date'] }}" },
+             { "name": "vendor_name", "value": "={{ $json['vendor_name'] }}" },
+             { "name": "gl_code_suggestion", "value": "={{ $json['gl_code'] }}" },
+             { "name": "extracted_text", "value": "={{ $json['text'] }}" },
+             { "name": "thumbnail_url", "value": "={{ $node['Google Drive Trigger'].json['webViewLink'] }}" }
+          ]
+        }
+      },
+      "name": "HTTP Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
