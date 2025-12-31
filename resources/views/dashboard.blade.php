@@ -203,7 +203,12 @@
                     @forelse($bankLogs as $log)
                         <tr>
                             <td>{{ $log->transaction_date }}</td>
-                            <td>{{ $log->description }}</td>
+                            <td>
+                                {{ $log->description }}
+                                @if($log->bank_source)
+                                    <div style="font-size: 0.8em; color: #94a3b8;">{{ $log->bank_source }}</div>
+                                @endif
+                            </td>
                             <td>₦{{ number_format($log->amount, 2) }}</td>
                             <td>{{ ucfirst($log->type) }}</td>
                             <td>
@@ -246,14 +251,14 @@
 
     <script>
         function openModal(url) {
-            if (!url) return;
+             if (!url) return;
             document.getElementById('modalImage').src = url;
             document.getElementById('imageModal').classList.add('active');
         }
 
         function closeModal() {
             document.getElementById('imageModal').classList.remove('active');
-        }
+    }
     </script>
 </body>
 

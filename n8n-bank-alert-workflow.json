@@ -1,0 +1,111 @@
+{
+    "name": "Bank Email Watcher (IMAP/Yahoo)",
+    "nodes": [
+        {
+            "parameters": {
+                "pollTimes": {
+                    "item": [
+                        {
+                            "mode": "everyMinute"
+                        }
+                    ]
+                },
+                "mailbox": "INBOX",
+                "format": "resolved",
+                "options": {
+                    "customEmailConfig": true,
+                    "allowUnauthorizedCerts": true
+                }
+            },
+            "name": "IMAP Email Trigger",
+            "type": "n8n-nodes-base.emailReadImap",
+            "typeVersion": 1,
+            "position": [
+                250,
+                300
+            ],
+            "credentials": {
+                "imap": {
+                    "id": "YOUR_IMAP_CREDENTIALS_ID",
+                    "name": "Yahoo/Outlook Account"
+                }
+            },
+            "notes": "Configure for Yahoo:\nHost: imap.mail.yahoo.com\nPort: 993\nSSL: true\nUser: your_email@yahoo.com\nPass: App Password (Generate in Yahoo Security settings)"
+        },
+        {
+            "parameters": {
+                "prompt": "Analyze this email bank alert. Extract:\n- Transaction Date (YYYY-MM-DD)\n- Amount (Number only)\n- Description (Vendor/Remark)\n- Type (debit/credit)\n- Bank Source (e.g. 'Yahoo - GTBank')\n\nReturn JSON: { transaction_date, amount, description, type, bank_source }",
+                "text": "={{ $json.textPlain }}"
+            },
+            "name": "AI Parser (Gemini)",
+            "type": "n8n-nodes-base.googleGemini",
+            "typeVersion": 1,
+            "position": [
+                450,
+                300
+            ]
+        },
+        {
+            "parameters": {
+                "method": "POST",
+                "url": "http://localhost:8000/api/v1/bank-webhook",
+                "sendBody": true,
+                "bodyParameters": {
+                    "parameters": [
+                        {
+                            "name": "transaction_date",
+                            "value": "={{ $json.transaction_date }}"
+                        },
+                        {
+                            "name": "amount",
+                            "value": "={{ $json.amount }}"
+                        },
+                        {
+                            "name": "description",
+                            "value": "={{ $json.description }}"
+                        },
+                        {
+                            "name": "type",
+                            "value": "={{ $json.type }}"
+                        },
+                        {
+                            "name": "bank_source",
+                            "value": "={{ $json.bank_source }}"
+                        }
+                    ]
+                }
+            },
+            "name": "Send to Laravel",
+            "type": "n8n-nodes-base.httpRequest",
+            "typeVersion": 1,
+            "position": [
+                650,
+                300
+            ]
+        }
+    ],
+    "connections": {
+        "IMAP Email Trigger": {
+            "main": [
+                [
+                    {
+                        "node": "AI Parser (Gemini)",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        },
+        "AI Parser (Gemini)": {
+            "main": [
+                [
+                    {
+                        "node": "Send to Laravel",
+                        "type": "main",
+                        "index": 0
+                    }
+                ]
+            ]
+        }
+    }
+}

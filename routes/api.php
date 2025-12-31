@@ -9,3 +9,4 @@ Route::get('/user', function (Request $request) {
 })->middleware('auth:sanctum');
 
 Route::post('/v1/receipt-webhook', [ReceiptVerificationController::class, 'webhook']);
+Route::post('/v1/bank-webhook', [\App\Http\Controllers\Api\V1\BankTransactionController::class, 'store']);

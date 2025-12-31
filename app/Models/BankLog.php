@@ -9,7 +9,7 @@ class BankLog extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['transaction_date', 'description', 'amount', 'type', 'status'];
+    protected $fillable = ['transaction_date', 'description', 'amount', 'type', 'status', 'bank_source'];
 
     public function attachments()
     {
