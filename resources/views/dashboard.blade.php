@@ -218,10 +218,19 @@
                             </td>
                             <td>
                                 @if($log->attachments->count() > 0)
-                                    <button class="icon-btn"
-                                        onclick="openModal('{{ $log->attachments->first()->thumbnail_url }}')">
-                                        Show Receipt 📷
-                                    </button>
+                                    @php
+                                        $att = $log->attachments->first();
+                                    @endphp
+                                    @if($att->thumbnail_url)
+                                        <button class="icon-btn" onclick="openModal('{{ $att->thumbnail_url }}')">
+                                            Show Receipt 📷
+                                        </button>
+                                    @elseif($att->google_drive_file_id)
+                                        <a href="https://drive.google.com/file/d/{{ $att->google_drive_file_id }}/view" 
+                                           target="_blank" class="icon-btn" style="text-decoration:none;">
+                                            Open in Drive 📄
+                                        </a>
+                                    @endif
                                 @else
                                     @if($log->type == 'debit')
                                         <span style="color: #ef4444; font-size: 1.5rem; cursor:help;"

@@ -22,6 +22,7 @@ class ReceiptVerificationController extends Controller
             'date' => 'nullable|date',
             'vendor_name' => 'nullable|string',
             'gl_code_suggestion' => 'nullable|string',
+            'gl_code' => 'nullable|string',
             'thumbnail_url' => 'nullable|string',
         ]);
 
@@ -47,7 +48,7 @@ class ReceiptVerificationController extends Controller
                 'entry_date' => $bankLog->transaction_date,
                 'description' => $validated['vendor_name'] ?? $bankLog->description,
                 'amount' => $bankLog->amount,
-                'gl_code' => $validated['gl_code_suggestion'] ?? '4400',
+                'gl_code' => $validated['gl_code_suggestion'] ?? $validated['gl_code'] ?? '4400',
                 'bank_log_id' => $bankLog->id,
             ]);
 
@@ -57,8 +58,8 @@ class ReceiptVerificationController extends Controller
                 'ledger_entry_id' => $ledgerEntry->id,
                 'google_drive_file_id' => $validated['file_id'],
                 'thumbnail_url' => $validated['thumbnail_url'] ?? null,
-                'extracted_text' => $validated['extracted_text'],
-                'file_name' => $validated['file_name'],
+                'extracted_text' => $validated['extracted_text'] ?? null,
+                'file_name' => $validated['file_name'] ?? null,
             ]);
 
             // 3. Update Bank Log
@@ -72,8 +73,8 @@ class ReceiptVerificationController extends Controller
                 'ledger_entry_id' => null,
                 'google_drive_file_id' => $validated['file_id'],
                 'thumbnail_url' => $validated['thumbnail_url'] ?? null,
-                'extracted_text' => $validated['extracted_text'],
-                'file_name' => $validated['file_name'],
+                'extracted_text' => $validated['extracted_text'] ?? null,
+                'file_name' => $validated['file_name'] ?? null,
             ]);
 
             return response()->json(['message' => 'Receipt stored, no matching bank log found'], 202);
