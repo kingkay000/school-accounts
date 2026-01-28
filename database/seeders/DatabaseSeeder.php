@@ -4,7 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\ChartOfAccount;
 use App\Models\BankLog;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
@@ -14,6 +16,16 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Create Admin User
+        User::firstOrCreate(
+            ['email' => 'admin@school.com'],
+            [
+                'name' => 'Admin User',
+                'password' => Hash::make('password'),
+                'email_verified_at' => now(),
+            ]
+        );
+
         // Chart of Accounts
         $accounts = [
             ['code' => '5300', 'name' => 'Fuel/Diesel', 'type' => 'expense'],

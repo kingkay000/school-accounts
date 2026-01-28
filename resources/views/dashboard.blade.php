@@ -183,8 +183,15 @@
 
 <body>
     <div class="container">
-        <header>
+        <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 60px;">
             <h1>Ledger & Verification</h1>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit"
+                    style="background: none; border: 1px solid rgba(255,255,255,0.2); color: #94a3b8; padding: 8px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s;">
+                    Logout
+                </button>
+            </form>
         </header>
 
         <div class="card">
@@ -226,8 +233,8 @@
                                             Show Receipt 📷
                                         </button>
                                     @elseif($att->google_drive_file_id)
-                                        <a href="https://drive.google.com/file/d/{{ $att->google_drive_file_id }}/view" 
-                                           target="_blank" class="icon-btn" style="text-decoration:none;">
+                                        <a href="https://drive.google.com/file/d/{{ $att->google_drive_file_id }}/view"
+                                            target="_blank" class="icon-btn" style="text-decoration:none;">
                                             Open in Drive 📄
                                         </a>
                                     @endif
@@ -260,14 +267,14 @@
 
     <script>
         function openModal(url) {
-             if (!url) return;
+            if (!url) return;
             document.getElementById('modalImage').src = url;
             document.getElementById('imageModal').classList.add('active');
         }
 
         function closeModal() {
             document.getElementById('imageModal').classList.remove('active');
-    }
+        }
     </script>
 </body>
 

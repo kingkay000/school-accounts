@@ -13,17 +13,10 @@ if [ ! -f .env ]; then
     php artisan key:generate
 fi
 
-# Ensure sqlite DB exists
-if [ ! -f database/database.sqlite ]; then
-    echo "Creating database.sqlite"
-    touch database/database.sqlite
-    chown www-data:www-data database/database.sqlite
-    chmod 664 database/database.sqlite
-fi
-
-# Run migrations
+# Run migrations (safe to run on every deploy)
 echo "Running migrations..."
 php artisan migrate --force
+
 
 # Cache config/routes/views
 echo "Caching configuration..."

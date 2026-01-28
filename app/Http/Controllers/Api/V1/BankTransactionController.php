@@ -23,10 +23,16 @@ class BankTransactionController extends Controller
         ]);
 
         // Prevent duplicate entries (simple check based on date, amount, and description)
-        $exists = BankLog::where('transaction_date', Carbon::parse($validated['transaction_date'])->format('Y-m-d'))
+        // Prevent duplicate entries
+        // Note: Using precise timestamp check
+        $transactionDate = Carbon::parse($validated['transaction_date']);
+
+        $exists = BankLog::where('transaction_date', $transactionDate)
             ->where('amount', $validated['amount'])
-            ->where('description', $validated['description'])
             ->where('type', $validated['type'])
+            // Description might vary slightly, so we can be optional or strict. 
+            // Strict is better for now to avoid duplicates.
+            ->where('description', $validated['description'])
             ->exists();
 
         if ($exists) {
@@ -38,6 +44,7 @@ class BankTransactionController extends Controller
             'description' => $validated['description'],
             'amount' => $validated['amount'],
             'type' => $validated['type'],
+            'bank_source' => $validated['bank_source'] ?? 'Unknown Source',
             'status' => 'unverified'
         ]);
 
