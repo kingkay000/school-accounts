@@ -24,17 +24,18 @@ class BankTransactionController extends Controller
             'bank_source' => 'nullable|string', // e.g., "GTBank Email Alert"
         ]);
 
-        // Prevent duplicate entries (simple check based on date, amount, and description)
-        // Prevent duplicate entries
-        // Note: Using precise timestamp check
+        // Prevent duplicate entries (same amount + description + type + bank source in a short window)
+        // This avoids blocking legitimate multi-alert sequences like principal + charges.
         $transactionDate = Carbon::parse($validated['transaction_date']);
+        $bankSource = $validated['bank_source'] ?? 'Unknown Source';
+        $amount = round($validated['amount'], 2);
 
-        $exists = BankLog::where('transaction_date', $transactionDate)
-            ->where('amount', $validated['amount'])
+        $exists = BankLog::whereDate('transaction_date', $transactionDate->toDateString())
+            ->where('amount', $amount)
             ->where('type', $validated['type'])
-            // Description might vary slightly, so we can be optional or strict. 
-            // Strict is better for now to avoid duplicates.
             ->where('description', $validated['description'])
+            ->where('bank_source', $bankSource)
+            ->where('created_at', '>=', now()->subMinutes(15))
             ->exists();
 
         if ($exists) {
@@ -44,16 +45,16 @@ class BankTransactionController extends Controller
         $log = BankLog::create([
             'transaction_date' => Carbon::parse($validated['transaction_date']),
             'description' => $validated['description'],
-            'amount' => $validated['amount'],
+            'amount' => $amount,
             'type' => $validated['type'],
-            'bank_source' => $validated['bank_source'] ?? 'Unknown Source',
+            'bank_source' => $bankSource,
             'status' => 'unverified'
         ]);
 
         $transaction = Transaction::create([
             'bank_log_id' => $log->id,
             'direction' => $validated['type'] === 'credit' ? 'in' : 'out',
-            'amount' => $validated['amount'],
+            'amount' => $amount,
             'txn_date' => Carbon::parse($validated['transaction_date']),
             'counterparty_name' => $validated['description'],
             'narration' => $validated['description'],
