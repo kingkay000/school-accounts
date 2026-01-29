@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\BankLog;
+use App\Models\Transaction;
+use App\Services\TransactionWorkflowService;
 use Carbon\Carbon;
 
 class BankTransactionController extends Controller
@@ -12,7 +14,7 @@ class BankTransactionController extends Controller
     /**
      * Handle incoming bank transaction webhook from n8n (Email Parser).
      */
-    public function store(Request $request)
+    public function store(Request $request, TransactionWorkflowService $workflow)
     {
         $validated = $request->validate([
             'transaction_date' => 'required|date',
@@ -48,9 +50,23 @@ class BankTransactionController extends Controller
             'status' => 'unverified'
         ]);
 
+        $transaction = Transaction::create([
+            'bank_log_id' => $log->id,
+            'direction' => $validated['type'] === 'credit' ? 'in' : 'out',
+            'amount' => $validated['amount'],
+            'txn_date' => Carbon::parse($validated['transaction_date']),
+            'counterparty_name' => $validated['description'],
+            'narration' => $validated['description'],
+            'transaction_type' => 'other',
+            'status' => 'captured',
+        ]);
+
+        $workflow->refreshStatus($transaction->refresh());
+
         return response()->json([
             'message' => 'Bank transaction logged successfully',
-            'id' => $log->id
+            'id' => $log->id,
+            'transaction_id' => $transaction->id,
         ], 201);
     }
 }
