@@ -36,28 +36,29 @@ COPY . /app
 # Install PHP dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 
-# Install Node dependencies and build assets
-RUN npm install
-RUN npm run build
+# Build assets
+RUN npm install && npm run build
 
-# Create SQLite database file
-# We create a placeholder if it doesn't exist so permissions can be set
-RUN touch database/database.sqlite
+# Setup SQLite
+RUN mkdir -p database && touch database/database.sqlite
 
-# Set permissions
-RUN chown -R www-data:www-data /app \
+# IMPORTANT: Hugging Face runs as user 1000
+RUN chown -R 1000:1000 /app \
     && chmod -R 775 /app/storage \
     && chmod -R 775 /app/bootstrap/cache \
-    && chmod -R 664 database/database.sqlite
+    && chmod 664 database/database.sqlite
 
 # Nginx configuration
 COPY nginx.conf /etc/nginx/sites-available/default
 
-# Expose port 7860 for Hugging Face Spaces
+# Expose port 7860
 EXPOSE 7860
 
 # Start script
 COPY start.sh /start.sh
 RUN chmod +x /start.sh
+
+# Switch to the Hugging Face user
+USER 1000
 
 CMD ["/start.sh"]
