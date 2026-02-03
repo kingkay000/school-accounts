@@ -1,6 +1,6 @@
 FROM php:8.2-fpm
 
-# Install system dependencies
+# Install essential system dependencies
 RUN apt-get update && apt-get install -y \
     git \
     curl \
@@ -10,54 +10,45 @@ RUN apt-get update && apt-get install -y \
     zip \
     unzip \
     sqlite3 \
-    libsqlite3-dev \
-    nginx \
-    gnupg
+    libsqlite3-dev
 
-# Install Node.js
+# Install Node.js for asset building
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
     && apt-get install -y nodejs
 
-# Clear cache
+# Clean up
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
 RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite
 
-# Get latest Composer
+# Get Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 # Set working directory
 WORKDIR /app
 
-# Copy application files
+# Copy application files from your branch
 COPY . /app
 
-# Install PHP dependencies
+# Install PHP and Node dependencies
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
+RUN npm install && npm run build
 
-# Install Node dependencies and build assets
-RUN npm install
-RUN npm run build
+# Setup SQLite database
+RUN mkdir -p database && touch database/database.sqlite
 
-# Create SQLite database file
-# We create a placeholder if it doesn't exist so permissions can be set
-RUN touch database/database.sqlite
-
-# Set permissions
-RUN chown -R www-data:www-data /app \
+# Hugging Face runs as user 1000. Set permissions for storage and database.
+RUN chown -R 1000:1000 /app \
     && chmod -R 775 /app/storage \
     && chmod -R 775 /app/bootstrap/cache \
-    && chmod -R 664 database/database.sqlite
+    && chmod 664 database/database.sqlite
 
-# Nginx configuration
-COPY nginx.conf /etc/nginx/sites-available/default
-
-# Expose port 7860 for Hugging Face Spaces
+# Expose the mandatory Hugging Face port
 EXPOSE 7860
 
-# Start script
-COPY start.sh /start.sh
-RUN chmod +x /start.sh
+# Switch to the non-root user
+USER 1000
 
-CMD ["/start.sh"]
+# Start Laravel directly on port 7860
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=7860"]
