@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
 
 class LoginController extends Controller
 {
@@ -18,6 +20,15 @@ class LoginController extends Controller
             'email' => ['required', 'email'],
             'password' => ['required'],
         ]);
+
+        if (User::count() === 0) {
+            User::create([
+                'name' => 'Admin User',
+                'email' => env('DEFAULT_ADMIN_EMAIL', 'admin@school.com'),
+                'password' => Hash::make(env('DEFAULT_ADMIN_PASSWORD', 'password')),
+                'email_verified_at' => now(),
+            ]);
+        }
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
