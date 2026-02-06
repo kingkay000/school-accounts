@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Ensure storage permissions
 echo "Setting permissions..."
@@ -9,8 +10,17 @@ chown -R www-data:www-data /app/storage /app/bootstrap/cache
 if [ ! -f .env ]; then
     echo "Creating .env from .env.example"
     cp .env.example .env
-    # Generate key
-    php artisan key:generate
+fi
+
+# Ensure APP_KEY exists either from environment or .env file
+if [ -z "${APP_KEY}" ] && ! grep -qE '^APP_KEY=base64:' .env; then
+    echo "APP_KEY missing; generating and persisting to .env"
+    GENERATED_KEY=$(php -r 'echo "base64:".base64_encode(random_bytes(32));')
+    if grep -qE '^APP_KEY=' .env; then
+        sed -i "s#^APP_KEY=.*#APP_KEY=${GENERATED_KEY}#" .env
+    else
+        echo "APP_KEY=${GENERATED_KEY}" >> .env
+    fi
 fi
 
 # Run migrations (safe to run on every deploy)

@@ -15,4 +15,9 @@ class LedgerEntry extends Model
     {
         return $this->belongsTo(BankLog::class);
     }
+
+    public function attachments()
+    {
+        return $this->hasMany(Attachment::class);
+    }
 }

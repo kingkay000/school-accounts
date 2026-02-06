@@ -15,4 +15,9 @@ class BankLog extends Model
     {
         return $this->hasMany(Attachment::class);
     }
+
+    public function transaction()
+    {
+        return $this->hasOne(Transaction::class);
+    }
 }
