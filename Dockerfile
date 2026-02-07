@@ -8,9 +8,7 @@ RUN apt-get update && apt-get install -y \
     libonig-dev \
     libxml2-dev \
     zip \
-    unzip \
-    sqlite3 \
-    libsqlite3-dev
+    unzip
 
 # Install Node.js for asset building
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
@@ -20,7 +18,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd pdo_sqlite
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
 
 # Get Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
@@ -35,14 +33,11 @@ COPY . /app
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader
 RUN npm install && npm run build
 
-# Setup SQLite database
-RUN mkdir -p database && touch database/database.sqlite
 
 # Hugging Face runs as user 1000. Set permissions for storage and database.
 RUN chown -R 1000:1000 /app \
     && chmod -R 775 /app/storage \
-    && chmod -R 775 /app/bootstrap/cache \
-    && chmod 664 database/database.sqlite
+    && chmod -R 775 /app/bootstrap/cache
 
 # Expose the mandatory Hugging Face port
 EXPOSE 7860
