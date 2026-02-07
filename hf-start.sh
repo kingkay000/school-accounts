@@ -19,18 +19,14 @@ if [ ! -f .env ]; then
   cp .env.example .env
 fi
 
-# Default to MySQL while using file-backed session/cache when runtime env vars are not provided.
+# Default to MySQL + database sessions when runtime env vars are not provided.
 # HF Secrets can still override these values.
 if [ -z "${DB_CONNECTION:-}" ]; then
   set_env_value "DB_CONNECTION" "mysql"
 fi
 
 if [ -z "${SESSION_DRIVER:-}" ]; then
-  set_env_value "SESSION_DRIVER" "file"
-fi
-
-if [ -z "${CACHE_STORE:-}" ]; then
-  set_env_value "CACHE_STORE" "file"
+  set_env_value "SESSION_DRIVER" "database"
 fi
 
 # Ensure APP_KEY exists (required for sessions/cookies/auth).
