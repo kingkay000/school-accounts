@@ -51,4 +51,4 @@ EXPOSE 7860
 USER 1000
 
 # Start Laravel directly on port 7860
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=7860"]
+CMD ["./hf-start.sh"]
